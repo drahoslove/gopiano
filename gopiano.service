@@ -1,0 +1,17 @@
+[Unit]
+Description=Go piano service
+After=network.target
+
+[Service]
+ExecStart=/home/pi/bin/gopiano
+#ExecStartPost=/usr/local/bin/connect-midi.sh
+#ExecStartPost='/bin/sleep 1 && /usr/bin/aconnect 20:0 129:0 ; /bin/true'
+WorkingDirectory=/home/pi/
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+
