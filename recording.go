@@ -47,7 +47,15 @@ func recordingFromName(pathName string) Recording {
 	var datePart, timePart, weekdayPart, notesPart, secondsPart string = parts[0], parts[1], parts[2], parts[3], parts[5]
 	_ = weekdayPart
 
-	dateTime, err := time.Parse("2006-01-02 1504", strings.Join([]string{datePart, timePart}, " "))
+	location, err := time.LoadLocation("Local")
+	if err != nil {
+		log.Fatal(err)
+	}
+	dateTime, err := time.ParseInLocation(
+		"2006-01-02 1504",
+		strings.Join([]string{datePart, timePart}, " "),
+		location,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
