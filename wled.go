@@ -474,7 +474,7 @@ func getWled(addr string) (chan []byte, func(bool)) {
 						pressingOffTimer = nil
 						sendLeds(0) // leave realtime mode immideately
 					}
-					if state.active {
+					if state.active && ctrl[0] && ctrl[1] {
 						if doDecSat && note == KEY_DEC_SAT || doIncSat && note == KEY_INC_SAT ||
 							doDecBri && note == KEY_DEC_BRI || doIncBri && note == KEY_INC_BRI {
 							doDecSat = false
@@ -568,8 +568,8 @@ func noteToColor(note byte, velocity byte) RGB {
 	hue := 0
 	// rainbow modes
 	if state.colorMode >= MODE_RAINBOW_1 && state.colorMode <= MODE_RAINBOW_4 {
-		period := 12 * (state.colorMode - MODE_RAINBOW_1 + 1)  // define how much octaves the rainbow stretched
-		frac := float64(int(note+24)%period) / float64(period) // shift 24 to match with pian.co
+		period := 12 * (state.colorMode - MODE_RAINBOW_1 + 1)             // define how much octaves the rainbow stretched
+		frac := float64(((int(note)-24)+period)%period) / float64(period) // shift 24 to match with pian.co
 		hue = int(frac * 360)
 	} else
 	// solid color modes

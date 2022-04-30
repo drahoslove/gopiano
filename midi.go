@@ -79,6 +79,7 @@ func isBasicMessage(msg []byte) bool {
 
 // returns a channel witch emmits all
 // messages from all connected midi devices
+// and a cleanup func
 func getMidiMessages(devInName string) (chan []byte, func()) {
 	messages := make(chan []byte)
 
