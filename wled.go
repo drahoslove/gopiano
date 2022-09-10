@@ -263,7 +263,7 @@ func getWled(addr string) (chan []byte, func(bool)) {
 		}
 		for i := 0; i < leds.keys; i++ {
 			note := byte(i + leds.firstNote)
-			clr := BLACK
+			var clr RGB
 			if solidColor { // show all as frontend
 				clr = dimmedColor(noteToColor(note, 64))
 			} else { // show some lit, but most as background

@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"runtime"
 	"syscall"
 	"time"
@@ -38,21 +37,14 @@ func main() {
 	GID := byte(0)
 	UID := byte(0)
 
+	// recs := recordingsFromDir(archiveDir)
+	// _ = recs
+	// fmt.Println("archive:", recs.toJSON())
+
 	// Return json containing data of recordings obtained from names of mid files created from pianoteq
 	http.HandleFunc("/archive.json", func(w http.ResponseWriter, r *http.Request) {
 		setupResponse(&w, r)
-		recordings := Recordings{}
-		filepath.Walk(archiveDir, func(pathname string, info os.FileInfo, err error) error {
-			if err != nil {
-				log.Fatal(err)
-				return nil
-			}
-			if info.IsDir() || filepath.Ext(pathname) != ".mid" { // skip dirs and non midi files
-				return nil
-			}
-			recordings = append(recordings, recordingFromName(pathname))
-			return nil
-		})
+		recordings := recordingsFromDir(archiveDir)
 		fmt.Fprintln(w, recordings.toJSON())
 	})
 
