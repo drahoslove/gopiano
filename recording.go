@@ -22,20 +22,27 @@ import (
 type Recording struct {
 	Time     time.Time
 	Duration time.Duration
-	Notes    int64    // kes total (sum of keys)
-	Keys     *[88]int // key pressed by notes
+	Notes    int64 // kes total (sum of keys)
+	// Keys     *[88]int // key pressed by notes
+	Keys *map[byte]int
 }
 
 func (r *Recording) MarshalJSON() ([]byte, error) {
-	keys := []int{}
+	// keys := []int{}
+	keys := &map[byte]int{}
 	if r.Keys != nil {
-		keys = (*r.Keys)[:]
+		keys = r.Keys
+		// keys = (*r.Keys)[:]
+		// for i := byte(0); i < 88; i++ {
+		// 	if val, ok := (*r.Keys)[i]; ok {
+		// 		keys[i] = val
+		// 	}
 	}
 	return json.Marshal(&struct {
-		Time     int64 `json:"t"`
-		Duration int64 `json:"d"`
-		Notes    int64 `json:"n"`
-		Keys     []int `json:"k,omitempty"`
+		Time     int64         `json:"t"`
+		Duration int64         `json:"d"`
+		Notes    int64         `json:"n"`
+		Keys     *map[byte]int `json:"k,omitempty"`
 	}{
 		r.Time.Unix(),
 		int64(r.Duration.Seconds()),
@@ -49,7 +56,8 @@ func (r *Recording) load88(pathname string) error {
 		return nil
 	}
 
-	keys88 := [88]int{}
+	// keys88 := [88]int{}
+	keys88 := make(map[byte]int)
 	sum := 0
 
 	midFile, err := os.Open(pathname)
@@ -69,7 +77,12 @@ func (r *Recording) load88(pathname string) error {
 			key := int(msg.Key())
 			key -= NOTE_A0
 			if key >= 0 && key < 88 { // count the note
-				keys88[key]++
+				if val, ok := keys88[byte(key)]; ok {
+					keys88[byte(key)] = val + 1
+				} else {
+					keys88[byte(key)] = 1
+				}
+				// keys88[key]++
 				sum++
 			}
 		}
