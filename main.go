@@ -3,6 +3,7 @@ package main
 // GOOS=linux GOARCH=arm GOARM=7 go build
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -49,7 +50,7 @@ func main() {
 	r.HandleFunc("/archive.json", func(w http.ResponseWriter, r *http.Request) {
 		setupResponse(&w, r)
 		recordings := recordingsFromDir(archiveDir)
-		fmt.Fprintln(w, recordings.toJSON())
+		json.NewEncoder(w).Encode(recordings)
 	})
 
 	// this is to test the pianco api

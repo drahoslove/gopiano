@@ -17,13 +17,15 @@ import (
 	"gitlab.com/gomidi/midi/smf/smfreader"
 )
 
+type Keys88 = [88]int
+
 // Recording represent the metadata of
 // a single midi file from the archvie
 type Recording struct {
 	Time     time.Time
 	Duration time.Duration
-	Notes    int64    // kes total (sum of keys)
-	Keys     *[88]int // key pressed by notes
+	Notes    int64   // kes total (sum of keys)
+	Keys     *Keys88 // key pressed by notes
 }
 
 func (r *Recording) MarshalJSON() ([]byte, error) {
@@ -44,12 +46,22 @@ func (r *Recording) MarshalJSON() ([]byte, error) {
 	})
 }
 
+var cache88 map[string]*Keys88
+
+func init() {
+	cache88 = make(map[string]*Keys88)
+}
+
 func (r *Recording) load88(pathname string) error {
 	if r.Keys != nil { // already loaded
 		return nil
 	}
+	if p, ok := cache88[pathname]; ok { // use cache
+		r.Keys = p
+		return nil
+	}
 
-	keys88 := [88]int{}
+	keys88 := Keys88{}
 	sum := 0
 
 	midFile, err := os.Open(pathname)
@@ -78,7 +90,8 @@ func (r *Recording) load88(pathname string) error {
 		return fmt.Errorf("failed to parse mid file: %s", err.Error())
 	}
 
-	r.Keys = &keys88 // attach to self
+	r.Keys = &keys88            // attach to self
+	cache88[pathname] = &keys88 // save to cache
 
 	if sum != int(r.Notes) {
 		fmt.Printf("invalid keys count (%v): %s\n", sum, pathname)
