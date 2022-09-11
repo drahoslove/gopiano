@@ -13,6 +13,8 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/gorilla/handlers"
 )
 
 const ADDR = ":1212"
@@ -37,19 +39,21 @@ func main() {
 	GID := byte(0)
 	UID := byte(0)
 
+	r := http.NewServeMux()
+
 	// recs := recordingsFromDir(archiveDir)
 	// _ = recs
 	// fmt.Println("archive:", recs.toJSON())
 
 	// Return json containing data of recordings obtained from names of mid files created from pianoteq
-	http.HandleFunc("/archive.json", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/archive.json", func(w http.ResponseWriter, r *http.Request) {
 		setupResponse(&w, r)
 		recordings := recordingsFromDir(archiveDir)
 		fmt.Fprintln(w, recordings.toJSON())
 	})
 
 	// this is to test the pianco api
-	http.HandleFunc("/emitrandomnote", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/emitrandomnote", func(w http.ResponseWriter, r *http.Request) {
 		setupResponse(&w, r)
 		// ws.WriteMessage(websocket.TextMessage, []byte("playrandomfile 0 0")) // BinaryMessage
 		note := byte(NOTE_A0 + rand.Intn(NOTE_C8-NOTE_A0))
@@ -61,16 +65,16 @@ func main() {
 	})
 
 	// wled api
-	http.HandleFunc("/wled/on", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/wled/on", func(w http.ResponseWriter, r *http.Request) {
 		setupResponse(&w, r)
 		wledPower(true)
 	})
 
-	http.HandleFunc("/wled/off", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/wled/off", func(w http.ResponseWriter, r *http.Request) {
 		setupResponse(&w, r)
 		wledPower(false)
 	})
-	http.HandleFunc("/wled/set/bri", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/wled/set/bri", func(w http.ResponseWriter, r *http.Request) {
 		setupResponse(&w, r)
 		setWledState(*wledAddr, "bri", 20)
 		time.Sleep(time.Second / 2)
@@ -81,7 +85,7 @@ func main() {
 		setWledState(*wledAddr, "bri", 200)
 	})
 
-	http.HandleFunc("/wled/get/on", func(w http.ResponseWriter, r *http.Request) {
+	r.HandleFunc("/wled/get/on", func(w http.ResponseWriter, r *http.Request) {
 		setupResponse(&w, r)
 		on := getWledState(*wledAddr, "on").(bool)
 		fmt.Println("on", on)
@@ -112,7 +116,7 @@ func main() {
 
 	log.Println("Starting", ADDR)
 
-	if err := http.ListenAndServe(ADDR, nil); err != nil {
+	if err := http.ListenAndServe(ADDR, handlers.CompressHandler(r)); err != nil {
 		log.Fatal(err)
 	}
 }
