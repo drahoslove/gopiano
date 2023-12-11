@@ -65,6 +65,21 @@ func main() {
 		wled <- []byte{toCmd(CMD_NOTE_OFF), note}
 	})
 
+	// toggles the gid value of the ws message (group)
+	r.HandleFunc("/wsout/toggle", func(w http.ResponseWriter, r *http.Request) {
+		if GID == 0 {
+			GID = 1
+		} else {
+			GID = 0
+		}
+		setupResponse(&w, r)
+		json.NewEncoder(w).Encode(GID)
+	})
+	r.HandleFunc("/wsout/get", func(w http.ResponseWriter, r *http.Request) {
+		setupResponse(&w, r)
+		json.NewEncoder(w).Encode(GID)
+	})
+
 	// wled api
 	r.HandleFunc("/wled/on", func(w http.ResponseWriter, r *http.Request) {
 		setupResponse(&w, r)
