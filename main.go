@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
 const ADDR = ":1212"
@@ -30,6 +31,19 @@ func init() {
 	}
 }
 
+// Middleware that only forwards the request to the handlers if it is GET method
+func onlyGetMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			// Return an empty response for non-GET methods
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		// Call the next handler in the chain
+		next.ServeHTTP(w, r)
+	})
+}
+
 func main() {
 	flag.Parse()
 
@@ -40,7 +54,9 @@ func main() {
 	GID := byte(0)
 	UID := byte(0)
 
-	r := http.NewServeMux()
+	r := mux.NewRouter()
+	r.Use(handlers.CompressHandler)
+	r.Use(onlyGetMiddleware)
 
 	// recs := recordingsFromDir(archiveDir)
 	// _ = recs
@@ -67,12 +83,12 @@ func main() {
 
 	// toggles the gid value of the ws message (group)
 	r.HandleFunc("/wsout/toggle", func(w http.ResponseWriter, r *http.Request) {
+		setupResponse(&w, r)
 		if GID == 0 {
 			GID = 1
 		} else {
 			GID = 0
 		}
-		setupResponse(&w, r)
 		json.NewEncoder(w).Encode(GID)
 	})
 	r.HandleFunc("/wsout/get", func(w http.ResponseWriter, r *http.Request) {
@@ -132,13 +148,13 @@ func main() {
 
 	log.Println("Starting", ADDR)
 
-	if err := http.ListenAndServe(ADDR, handlers.CompressHandler(r)); err != nil {
+	if err := http.ListenAndServe(ADDR, r); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func setupResponse(w *http.ResponseWriter, req *http.Request) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
-	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS")
 	(*w).Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 }
